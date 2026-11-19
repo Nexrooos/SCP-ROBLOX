@@ -113,7 +113,7 @@ end
 local function runAI(model)
 	local path = PathfindingService:CreatePath({
 		AgentRadius = 2,
-		AgentHeight = 9,
+		AgentHeight = 10,
 		AgentCanJump = false,
 	})
 	local waypoints = {}

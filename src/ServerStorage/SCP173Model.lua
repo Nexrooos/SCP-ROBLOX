@@ -1,7 +1,11 @@
 --[[
 	SCP173Model (ModuleScript) — à placer dans ServerStorage, nommé "SCP173Model".
 
-	Construit un SCP-173 en pièces Roblox (pas besoin de mesh importé).
+	v2 (recommandé) : importe assets/SCP173.obj dans Studio (onglet Accueil > « Importer 3D »),
+	renomme le Model obtenu "SCP173Mesh" et range-le dans ServerStorage.
+	Le script l'utilise automatiquement (couleurs + taille appliquées).
+
+	v1 (secours) : si "SCP173Mesh" n'existe pas, construit SCP-173 en pièces Roblox.
 	Design ORIGINAL : statue humanoïde en béton, armature en fer qui dépasse,
 	tête disproportionnée, visage peint en rouge et traînées de peinture verte.
 	(On ne copie pas la sculpture d'origine, qui n'est pas sous licence libre.)
@@ -46,8 +50,75 @@ local function makePart(model, root, name, size, offset, color, material, shape)
 	return p
 end
 
+-- Couleurs / matériaux appliqués au modèle 3D importé (assets/SCP173.obj)
+local MESH_LOOK = {
+	Body = { color = Color3.fromRGB(196, 181, 145), material = Enum.Material.Concrete },
+	PaintBlack = { color = Color3.fromRGB(13, 10, 9), material = Enum.Material.SmoothPlastic },
+	PaintRed = { color = Color3.fromRGB(122, 15, 11), material = Enum.Material.SmoothPlastic },
+	PaintGreen = { color = Color3.fromRGB(61, 100, 36), material = Enum.Material.SmoothPlastic },
+	Rebar = { color = RUST, material = Enum.Material.CorrodedMetal },
+}
+local TARGET_HEIGHT = 9.9 -- studs
+
+-- Version v2 : utilise le mesh importé (ServerStorage > SCP173Mesh) s'il existe
+local function buildFromMesh(template, feetCFrame)
+	local model = template:Clone()
+	model.Name = "SCP-173"
+
+	-- Mise à l'échelle automatique, au cas où l'import a changé la taille
+	local _, size = model:GetBoundingBox()
+	if math.abs(size.Y - TARGET_HEIGHT) > 0.3 then
+		model:ScaleTo(model:GetScale() * TARGET_HEIGHT / size.Y)
+	end
+
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.CanCollide = false
+			d.CanQuery = true
+			for key, look in pairs(MESH_LOOK) do
+				if string.find(d.Name, key, 1, true) then
+					d.Color = look.color
+					d.Material = look.material
+					if d:IsA("MeshPart") then
+						d.TextureID = ""
+					end
+				end
+			end
+		end
+	end
+
+	-- Racine au sol, au centre, orientée comme le mesh (face vers -Z)
+	local cf, box = model:GetBoundingBox()
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Size = Vector3.new(2, 0.2, 2)
+	root.Transparency = 1
+	root.Anchored = true
+	root.CanCollide = false
+	root.CanQuery = false
+	root.CFrame = CFrame.new(cf.Position.X, cf.Position.Y - box.Y / 2, cf.Position.Z)
+	root.Parent = model
+	model.PrimaryPart = root
+
+	local soundAnchor = Instance.new("Attachment")
+	soundAnchor.Name = "SoundAnchor"
+	soundAnchor.Position = Vector3.new(0, 1, 0)
+	soundAnchor.Parent = root
+
+	model:PivotTo(feetCFrame)
+	CollectionService:AddTag(model, "SCP173")
+	return model
+end
+
 function SCP173Model.build(feetCFrame)
 	feetCFrame = feetCFrame or CFrame.new()
+
+	local template = game:GetService("ServerStorage"):FindFirstChild("SCP173Mesh")
+	if template then
+		return buildFromMesh(template, feetCFrame)
+	end
+	-- Sinon : version v1 en blocs (ci-dessous)
 
 	local model = Instance.new("Model")
 	model.Name = "SCP-173"
