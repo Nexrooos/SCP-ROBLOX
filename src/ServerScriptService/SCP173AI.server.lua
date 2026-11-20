@@ -24,6 +24,8 @@ local PathfindingService = game:GetService("PathfindingService")
 local RunService = game:GetService("RunService")
 
 local SCP173Model = require(ServerStorage:WaitForChild("SCP173Model"))
+-- Dossier des anomalies : 173 entre au dossier du joueur dès qu'il le voit (conseils de D-0451 dans le hall)
+local Codex = require(script.Parent:WaitForChild("SCPCodex"))
 
 local CONFIG = {
 	TICK = 0.1, -- intervalle de mise à jour (s)
@@ -52,6 +54,9 @@ remote.OnServerEvent:Connect(function(player, model, isWatching)
 	end
 	watching[player] = watching[player] or {}
 	watching[player][model] = (isWatching == true) or nil
+	if isWatching == true then
+		Codex.markSeen(player, "SCP-173")
+	end
 end)
 
 Players.PlayerRemoving:Connect(function(player)
@@ -164,6 +169,10 @@ local function runAI(model)
 		if dist <= CONFIG.KILL_DISTANCE then
 			playSound(model, CONFIG.SNAP_SOUND_ID, 2)
 			hum.Health = 0
+			local victim = Players:GetPlayerFromCharacter(hum.Parent)
+			if victim then
+				task.spawn(Codex.markSeen, victim, "SCP-173", { died = true })
+			end
 			continue
 		end
 

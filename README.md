@@ -62,6 +62,35 @@ Le hall et les parties partagent la même place. Régler *Paramètres du jeu > P
 
 Sons à renseigner dans `CONFIG` : `DOOR_SOUND_ID`, `DEPART_SOUND_ID`.
 
+### 1.6 Décor du hall
+
+Dossier `Workspace.Hub.Decor`, construit dans la place Studio (pas de script de génération) :
+
+| Élément | Emplacement | Contenu |
+|---|---|---|
+| `CelluleIsolement` | mur ouest | cellule capitonnée à barreaux de D-0451, gribouillis au marqueur, néon qui grésille, repère `FouSpot` du PNJ |
+| `Vitrine173` | mur est | réplique de SCP-173 sous verre, plaque « EUCLIDE », cordon de sécurité, traces de raclement au sol |
+| `Affiches` | murs est, ouest et sud | classes Sûr / Euclide / Keter, « Sécuriser · Contenir · Protéger », avertissement SCP-096, compteur « jours sans incident : 00 » |
+| `Cameras` | coins du plafond | caméras de surveillance, voyant rouge clignotant (attribut `Blink`) |
+| `Menage` | côté nord-ouest | panneau « sol glissant », flaque, chariot de ménage |
+
+### 1.7 D-0451 « Le Fou » et dossier des anomalies
+
+Un Classe D enfermé dans la cellule d'isolement. On lui parle à travers les barreaux (touche E). Il ne parle que des anomalies que le joueur a déjà rencontrées, et donne un conseil par conversation.
+
+- **Dossier.** `SCPCodex` enregistre, pour chaque joueur, les anomalies vues et le nombre de morts contre chacune (DataStore `SCPCodex_v1`, car le hall et les parties sont sur des serveurs différents). SCP-173 entre au dossier dès que le joueur le regarde, et chaque mort est comptée. À la première rencontre, une notification « DOSSIER » renvoie vers D-0451.
+- **Répliques.** `SCPTips` contient les répliques : salut, salut selon le nombre de morts, conseils dans l'ordre puis en boucle, et réponses quand le joueur n'a encore rien vu. Les conseils de SCP-096, 106, 049 et 939 sont déjà écrits pour la suite.
+- **Ajouter une anomalie.** Une entrée dans `SCPTips.ENTRIES`, plus un appel à `SCPCodex.markSeen(player, "SCP-XXX", { died = true })` dans son script.
+
+| Fichier | Type dans Roblox Studio | Emplacement |
+|---|---|---|
+| `src/ServerScriptService/SCPCodex.lua` | **ModuleScript** | `ServerScriptService` |
+| `src/ServerScriptService/CrazyDClass.server.lua` | **Script** | `ServerScriptService` |
+| `src/ReplicatedStorage/SCPTips.lua` | **ModuleScript** | `ReplicatedStorage` |
+| `src/StarterPlayerScripts/CrazyDClassDialog.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
+
+Dans Studio, le dossier n'est sauvegardé que si *Paramètres du jeu > Sécurité > Autoriser l'accès de Studio aux services API* est activé. Sinon, il reste en mémoire le temps de l'essai.
+
 ---
 
 ## Section 2 · Bloc cellulaire D (début de partie)

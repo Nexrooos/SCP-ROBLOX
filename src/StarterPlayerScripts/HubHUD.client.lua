@@ -337,7 +337,12 @@ local function render()
 		hint:hide()
 		siteBox:hide()
 	else
-		hint:show(HINT_TEXT)
+		-- Pendant un dialogue (D-0451, voir CrazyDClassDialog), une seule fenêtre en bas de l'écran
+		if player:GetAttribute("InDialog") then
+			hint:hide()
+		else
+			hint:show(HINT_TEXT)
+		end
 		setFade(false)
 		return
 	end
@@ -414,4 +419,5 @@ local function bindSas()
 end
 
 player:GetAttributeChangedSignal("HubSas"):Connect(bindSas)
+player:GetAttributeChangedSignal("InDialog"):Connect(render)
 bindSas()
