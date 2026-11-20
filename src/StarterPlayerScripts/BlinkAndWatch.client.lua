@@ -6,6 +6,11 @@
 	2. Détection : dit au serveur si tu vois SCP-173 (à l'écran ET pas caché derrière un mur).
 ]]
 
+-- Ne tourne que sur un serveur de partie, pas dans le hall de transit (voir HubServer).
+while workspace:GetAttribute("ServerMode") ~= "Match" do
+	workspace:GetAttributeChangedSignal("ServerMode"):Wait()
+end
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")

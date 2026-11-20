@@ -11,6 +11,11 @@
 	  "SCP173Spawn" dans le Workspace (sinon il apparaît en 0, 0, -40).
 ]]
 
+-- Ne tourne que sur un serveur de partie, pas dans le hall de transit (voir HubServer).
+while workspace:GetAttribute("ServerMode") ~= "Match" do
+	workspace:GetAttributeChangedSignal("ServerMode"):Wait()
+end
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
