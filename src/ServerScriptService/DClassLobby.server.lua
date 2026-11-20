@@ -422,16 +422,19 @@ local function run()
 	workspace:SetAttribute("LobbyCountdown", nil)
 
 	-- Appel
+	-- Un seul message pour tout l'appel (une bulle par annonce : on en limite le nombre)
 	setState("RollCall")
-	announce("Appel du personnel de Classe D.", "pa", 3.5)
+	local called = {}
 	for i = 1, CONFIG.MAX_PLAYERS do
 		local p = cellOwner[i]
 		if p and p.Parent then
-			announce(string.format("%s, préparez-vous pour le test.", p:GetAttribute("Matricule")), "pa", 3.5)
+			table.insert(called, p:GetAttribute("Matricule"))
 		end
 	end
-	announce("Rappel : toute tentative d'évasion entraînera une mise fin immédiate.", "pa", 4.5)
-	task.wait(2)
+	if #called > 0 then
+		announce(string.format("Appel : %s. Préparez-vous pour le test.", table.concat(called, ", ")), "pa", 5)
+	end
+	task.wait(3)
 
 	-- Brèche de confinement
 	setState("Breach")
@@ -451,7 +454,7 @@ local function run()
 	task.wait(1.4)
 	setLights(0.35, Color3.fromRGB(255, 190, 170))
 	screensLost()
-	announce("ALERTE. BRÈCHE DE CONFINEMENT EN ZONE DE CONFINEMENT LÉGÈRE.", "alert", 4)
+	task.wait(1.5)
 
 	local doors = CollectionService:GetTagged("CellDoor")
 	for i = #doors, 2, -1 do
@@ -462,12 +465,13 @@ local function run()
 		slideDoor(door, true, 1.2 + math.random() * 0.8)
 		task.wait(0.08 + math.random() * 0.15)
 	end
-	announce("Défaillance du verrouillage. Portes du bloc D déverrouillées.", "alert", 3)
+	task.spawn(announce, "Portes déverrouillées. Rejoignez le sas.", "alert", 5)
+	task.wait(1.5)
 	slideDoor(securityDoor("HallDoor"), true, 2.5)
 	task.wait(1)
 	slideDoor(securityDoor("TestDoor"), true, 2.5)
 	slideDoor(securityDoor("InnerDoor"), true, 2.5)
-	announce("Tout le personnel doit évacuer vers les zones sécurisées.", "alert", 3)
+	task.wait(3)
 	setState("Open")
 
 	-- Regroupement dans le sas, puis SALLE 001
@@ -490,7 +494,6 @@ local function run()
 		task.wait(0.5)
 	end
 	workspace:SetAttribute("LobbyRegroup", nil)
-	announce("Décontamination ignorée. Accès SALLE 001 forcé.", "alert", 2.5)
 	slideDoor(securityDoor("Room001Door"), true, 3)
 	setState("Started")
 	if siren then

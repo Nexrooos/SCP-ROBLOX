@@ -140,8 +140,6 @@ local function refreshStatus()
 		))
 	elseif regroup then
 		setStatus(statusAlert, "Rejoignez le sas · " .. regroup)
-	elseif state == "Breach" then
-		setStatus(statusAlert, "Brèche en cours. Attendez l'ouverture des portes.")
 	else
 		statusInfo:hide()
 		statusAlert:hide()
