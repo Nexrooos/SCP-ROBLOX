@@ -34,11 +34,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Tips = require(ReplicatedStorage:WaitForChild("SCPTips"))
+local FaceKit = require(game:GetService("ServerStorage"):WaitForChild("FaceKit"))
 
 local CONFIG = {
 	MATRICULE = "D-0451",
 	SUIT = Color3.fromRGB(176, 92, 36), -- orange terni
-	SKIN = Color3.fromRGB(206, 164, 132),
+	SKIN = Color3.fromRGB(176, 128, 98), -- teint terne, pas blanc
 	HAIR = Color3.fromRGB(46, 38, 32),
 	PROMPT_DISTANCE = 12, -- depuis la ligne jaune devant la cellule, il est au fond (studs)
 	FOCUS_RANGE = 18, -- il fixe le joueur le plus proche dans ce rayon (studs)
@@ -162,6 +163,10 @@ local function buildNPC()
 	desc.RightArmColor = CONFIG.SUIT
 	desc.LeftLegColor = CONFIG.SUIT
 	desc.RightLegColor = CONFIG.SUIT
+	-- silhouette émaciée : épaules étroites, corps maigre, tête un peu trop grosse
+	desc.WidthScale = 0.78
+	desc.DepthScale = 0.8
+	desc.HeadScale = 1.06
 	local ok, model = pcall(function()
 		return Players:CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
 	end)
@@ -253,36 +258,68 @@ local function buildNPC()
 	weldTo(head, "HairBack", Vector3.new(1.28, 0.7, 0.3), CFrame.new(0, 0.2, 0.55), CONFIG.HAIR, Enum.Material.Fabric)
 	for _ = 1, 16 do
 		-- mèches courtes, couchées dans tous les sens, réparties sur le crâne
-		local a = rng(0, math.pi * 2)
+		-- jamais sur le front (sinon les mèches cachent le visage)
+		local a = rng(-math.pi * 0.1, math.pi * 1.1)
 		local r = rng(0.1, 0.55)
 		weldTo(
 			head,
 			"HairTuft",
 			Vector3.new(rng(0.18, 0.3), rng(0.25, 0.5), rng(0.18, 0.3)),
-			CFrame.new(math.cos(a) * r, rng(0.58, 0.72), math.sin(a) * r + 0.12)
+			CFrame.new(math.cos(a) * r, rng(0.6, 0.74), math.sin(a) * r + 0.15)
 				* CFrame.Angles(math.sin(a) * rng(0.7, 1.4), rng(0, 3), -math.cos(a) * rng(0.7, 1.4)),
 			CONFIG.HAIR:Lerp(Color3.fromRGB(90, 80, 70), rng(0, 0.3)),
 			Enum.Material.Fabric
 		)
 	end
-	-- cernes sous les yeux
-	local face = Instance.new("SurfaceGui")
-	face.Face = F
-	face.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	face.PixelsPerStud = 80
-	face.Parent = head
-	for _, x in ipairs({ 0.22, 0.58 }) do
-		local ring = Instance.new("Frame")
-		ring.Size = UDim2.fromScale(0.2, 0.08)
-		ring.Position = UDim2.fromScale(x, 0.5)
-		ring.BackgroundColor3 = Color3.fromRGB(110, 70, 70)
-		ring.BackgroundTransparency = 0.45
-		ring.BorderSizePixel = 0
-		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(1, 0)
-		c.Parent = ring
-		ring.Parent = face
+	-- Visage : yeux exorbités injectés de sang, pupilles en tête d'épingle, sourcils de travers,
+	-- sourire trop large, cernes, barbe sale, cicatrice, sueur (animé par NPCFaces)
+	FaceKit.apply(head, {
+		skin = CONFIG.SKIN,
+		iris = Color3.fromRGB(120, 140, 130),
+		eyeSize = 1.4,
+		pupil = 0.26,
+		lids = 0,
+		brows = { -22, 16 },
+		browThick = 0.05,
+		browColor = CONFIG.HAIR,
+		mouth = "grin",
+		bags = 1,
+		bloodshot = true,
+		stubble = 0.9,
+		stubbleColor = Color3.fromRGB(60, 50, 42),
+		scar = true,
+		sweat = true,
+		crazy = true,
+	})
+
+	-- Griffures sur les avant-bras (il se gratte jusqu'au sang) et bandage sale au poignet
+	for _, n in ipairs({ "LeftLowerArm", "RightLowerArm" }) do
+		local arm = get(n)
+		local g = Instance.new("SurfaceGui")
+		g.Face = F
+		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		g.PixelsPerStud = 60
+		g.Parent = arm
+		for k = 1, 4 do
+			local s = Instance.new("Frame")
+			s.BorderSizePixel = 0
+			s.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
+			s.BackgroundTransparency = 0.2
+			s.Size = UDim2.fromScale(0.8, 0.025)
+			s.Position = UDim2.fromScale(0.1, 0.3 + k * 0.08)
+			s.Rotation = -25 + k * 4
+			s.Parent = g
+		end
 	end
+	local wrist = get("LeftLowerArm")
+	weldTo(
+		wrist,
+		"Bandage",
+		Vector3.new(wrist.Size.X + 0.08, 0.35, wrist.Size.Z + 0.08),
+		CFrame.new(0, -wrist.Size.Y / 2 + 0.25, 0),
+		Color3.fromRGB(200, 192, 170),
+		Enum.Material.Fabric
+	)
 
 	-- Posé au sol, au repère FouSpot
 	model:PivotTo(homeMarker.CFrame)
@@ -430,6 +467,7 @@ local function endTalk(player)
 	lastTalk[player] = os.clock()
 	if talkingTo == player then
 		talkingTo = nil
+		npc:SetAttribute("Talking", false)
 		task.delay(0.6, function()
 			if not talkingTo then
 				backToCorner()
@@ -458,7 +496,8 @@ prompt.Triggered:Connect(function(player)
 	end
 	local lines = buildLines(player)
 	task.wait(CONFIG.RUSH_TIME * 0.8) -- la fenêtre s'ouvre quand il arrive aux barreaux
-	remote:FireClient(player, "Open", Tips.SPEAKER, lines)
+	npc:SetAttribute("Talking", true) -- la bouche bouge (NPCFaces)
+	remote:FireClient(player, "Open", Tips.SPEAKER, lines, root)
 	local started = busy[player]
 	task.delay(CONFIG.TALK_TIMEOUT, function()
 		if busy[player] == started then

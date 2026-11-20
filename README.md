@@ -92,14 +92,20 @@ Dossier `Workspace.Hub.Decor`, construit dans la place Studio (pas de script de 
 
 ### 1.9 Vie du hall
 
-- **Gardes** (`HubLife`) : un garde posté devant la cellule, qui jette des coups d'œil au détenu, et deux gardes en ronde lente. Le module `FoundationGuard` joue l'animation de marche par défaut de Roblox, lue dans le script Animate généré.
+- **Gardes** (`HubLife`, table `GUARDS`) : trois personnages distincts, chacun avec son visage, son allure et son caractère.
+  - Delmas, posté devant la cellule : vieux garde blasé, béret, moustache grise, tasse de café.
+  - Ferrand, en ronde : sévère et procédurier, cicatrice, sourcils froncés.
+  - Okoye, en ronde : jeune recrue nerveuse qui en dit trop, en sueur.
+  
+  Les rondes suivent un chemin calculé (`PathfindingService`) : les gardes contournent bancs, jardinières et piliers. On peut leur parler (touche E) : le garde s.arrête, se tourne vers le joueur et répond, sans jamais citer d.anomalie. Le module `FoundationGuard` joue l.animation de marche par défaut de Roblox (lue dans le script Animate généré) et accepte les options de personnage (visage, casque, béret, bande nominative, tasse).
 - **Écrans de surveillance** (`SecurityMonitors`) : chaque écran tagué `SecurityScreen` affiche une vraie image, dans un `ViewportFrame` filmé depuis une caméra `SecurityCam`. On y voit le décor, les joueurs, les gardes et D-0451 en direct (15 images/s). Les caméras du plafond balaient lentement, et l'écran change de caméra toutes les 9 s avec un parasite. Incrustation : nom de la caméra, REC, date et heure. Les écrans ne sont construits qu'à moins de 70 studs du joueur.
 - **Sons** (`HubLife`, dans `CONFIG`) : bourdonnement de ventilation (ProSoundEffects 9125446564) et annonces occasionnelles aux haut-parleurs (carillon 88920716117135, puis voix radio ProSoundEffects filtrée).
 
 ### 1.10 D-0451 « Le Fou » et dossier des anomalies
 
-Un Classe D enfermé dans la cellule de détention. Combinaison orange sale et déchirée, cheveux en bataille, posture voûtée.
+Un Classe D enfermé dans la cellule de détention. Silhouette maigre, combinaison orange sale et déchirée, griffures sur les bras, bandage au poignet, cheveux en bataille, posture voûtée.
 
+- **Visages** (`FaceKit`, serveur, et `NPCFaces`, client) : les PNJ du hall ont de vrais visages dessinés, sans aucun asset (yeux, iris, pupilles, paupières, sourcils, nez, bouche, cernes, barbe, cicatrices, sueur). Ils clignent des yeux, leur regard bouge, et leur bouche remue quand ils parlent (attribut `Talking`). Le Fou a les yeux exorbités et injectés de sang, des pupilles qui se dilatent par à-coups et un sourire trop large.
 - **Animation** (`CrazyDClassAnim`, client) : ses articulations sont converties en `Motor6D` et animées à la main, sans ID d'animation. Il se balance d'avant en arrière et a des tics nerveux. Il tourne brusquement la tête vers le joueur le plus proche (attribut `Focus`), puis le suit du regard.
 - **Conversation** (touche E, depuis la ligne jaune) : il se jette sur les barreaux et s'y agrippe en les secouant (attribut `State` : Rush, Grab, puis Return), et parle dans une seule fenêtre en bas de l'écran.
 - **Répliques** (`SCPTips`) : décousues, inquiétantes, sans aucun nom d'anomalie. Si le joueur n'a rien vécu, il délire. Sinon, il glisse des conseils déguisés sur ce que le joueur a rencontré, d'après le dossier `SCPCodex` (DataStore `SCPCodex_v1`). Exemple pour SCP-173 : « Faut la regarder. Toujours. »
@@ -115,6 +121,8 @@ Un Classe D enfermé dans la cellule de détention. Combinaison orange sale et d
 | `src/StarterPlayerScripts/CrazyDClassAnim.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
 | `src/StarterPlayerScripts/CrazyDClassDialog.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
 | `src/StarterPlayerScripts/SecurityMonitors.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
+| `src/ServerStorage/FaceKit.lua` | **ModuleScript** | `ServerStorage` |
+| `src/StarterPlayerScripts/NPCFaces.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
 
 Dans Studio, le dossier n'est sauvegardé que si *Paramètres du jeu > Sécurité > Autoriser l'accès de Studio aux services API* est activé. Sinon, il reste en mémoire le temps de l'essai.
 

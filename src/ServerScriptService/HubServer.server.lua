@@ -68,10 +68,10 @@ end
 -- est donc relevée ; elle est rétablie au passage en partie (bloc D, ambiance sombre voulue).
 local Lighting = game:GetService("Lighting")
 local HUB_LIGHTING = {
-	Ambient = Color3.fromRGB(138, 142, 150),
-	OutdoorAmbient = Color3.fromRGB(120, 124, 132),
-	EnvironmentDiffuseScale = 0.4,
-	ExposureCompensation = 0,
+	Ambient = Color3.fromRGB(104, 108, 116),
+	OutdoorAmbient = Color3.fromRGB(88, 92, 100),
+	EnvironmentDiffuseScale = 0.3,
+	ExposureCompensation = -0.3,
 }
 local savedLighting = nil
 local function useHubLighting(on)

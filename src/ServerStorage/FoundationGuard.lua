@@ -6,6 +6,8 @@
 	L'équipement est fait de parts simples soudées au corps (aucun asset externe).
 
 	Option walkSpeed : vitesse de marche (rondes du hall). Sous 10 studs/s, l'animation de marche est jouée.
+	Options de personnage (gardes du hall, voir HubLife) : skinColor, scale, face (spec ServerStorage.FaceKit),
+	helmet = "visorUp" | "none" (béret), hairColor, nameTag (bande sur la poitrine), mug (tasse à la main).
 
 	Animations : celles de marche, de course et d'attente par défaut de Roblox. Les ID sont lus dans le script
 	« Animate » que Roblox génère avec l'avatar. Comme ce script est un LocalScript (inactif pour un PNJ),
@@ -22,6 +24,8 @@ local Players = game:GetService("Players")
 
 local FoundationGuard = {}
 FoundationGuard.__index = FoundationGuard
+
+local applyPersona -- défini plus bas
 
 local UNIFORM = Color3.fromRGB(30, 33, 38)
 local GEAR = Color3.fromRGB(40, 43, 40)
@@ -143,6 +147,131 @@ local function buildTemplate()
 	template = rig
 end
 
+-- Pièce soudée à une partie du corps (après clonage du modèle de base)
+local function attach(model, base, name, size, offset, color, material, shape)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.Color = color
+	p.Material = material or Enum.Material.SmoothPlastic
+	if shape then
+		p.Shape = shape
+	end
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Massless = true
+	p.CFrame = base.CFrame * offset
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = base
+	w.Part1 = p
+	w.Parent = p
+	p.Parent = model
+	return p
+end
+
+-- Personnalité visuelle d'un garde du hall : visage, casque, bande nominative, accessoires
+function applyPersona(model, opts, skin)
+	local head = model:FindFirstChild("Head")
+	local torso = model:FindFirstChild("UpperTorso")
+	local helmet = model:FindFirstChild("Helmet")
+	local visor = model:FindFirstChild("Visor")
+
+	local function moveWelded(part, cf, size)
+		local weld = part:FindFirstChildOfClass("WeldConstraint")
+		if weld then
+			weld.Enabled = false
+		end
+		if size then
+			part.Size = size
+		end
+		part.CFrame = cf
+		if weld then
+			weld.Enabled = true
+		end
+	end
+	if opts.helmet == "visorUp" and visor then
+		-- casque remonté sur le crâne et visière relevée : les yeux restent visibles
+		if helmet then
+			moveWelded(helmet, head.CFrame * CFrame.new(0, 0.58, 0.1), Vector3.new(1.42, 0.74, 1.5))
+		end
+		moveWelded(visor, head.CFrame * CFrame.new(0, 0.95, -0.5) * CFrame.Angles(math.rad(-70), 0, 0))
+	elseif opts.helmet == "none" then
+		if helmet then
+			helmet:Destroy()
+		end
+		if visor then
+			visor:Destroy()
+		end
+		local hair = opts.hairColor or Color3.fromRGB(70, 66, 62)
+		attach(model, head, "Hair", Vector3.new(1.16, 0.2, 1.2), CFrame.new(0, 0.56, 0.06), hair, Enum.Material.Fabric)
+		attach(model, head, "HairBack", Vector3.new(1.16, 0.5, 0.18), CFrame.new(0, 0.28, 0.56), hair, Enum.Material.Fabric)
+		-- béret sombre, penché sur le côté
+		local beret = attach(
+			model,
+			head,
+			"Beret",
+			Vector3.new(0.35, 1.45, 1.4),
+			CFrame.new(0.12, 0.72, 0.05) * CFrame.Angles(0, 0, math.rad(90 - 12)),
+			Color3.fromRGB(32, 36, 48),
+			Enum.Material.Fabric,
+			Enum.PartType.Cylinder
+		)
+		beret.Size = Vector3.new(0.3, 1.45, 1.4)
+	end
+
+	if opts.face and head then
+		local FaceKit = require(script.Parent:WaitForChild("FaceKit"))
+		local spec = table.clone(opts.face)
+		spec.skin = skin
+		FaceKit.apply(head, spec)
+	end
+
+	-- bande nominative sur la poitrine
+	if opts.nameTag and torso then
+		local tape = attach(
+			model,
+			torso,
+			"NameTape",
+			Vector3.new(0.8, 0.22, 0.05),
+			CFrame.new(-0.38, 0.42, -torso.Size.Z / 2 - 0.16),
+			Color3.fromRGB(205, 200, 180),
+			Enum.Material.Fabric
+		)
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = Enum.NormalId.Front
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 120
+		gui.Parent = tape
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.fromScale(1, 1)
+		label.Font = Enum.Font.GothamBlack
+		label.TextScaled = true
+		label.TextColor3 = Color3.fromRGB(25, 25, 25)
+		label.Text = opts.nameTag
+		label.Parent = gui
+	end
+
+	-- tasse de café à la main gauche
+	if opts.mug then
+		local hand = model:FindFirstChild("LeftHand")
+		if hand then
+			local mug = attach(
+				model,
+				hand,
+				"Mug",
+				Vector3.new(0.45, 0.36, 0.36),
+				CFrame.new(0, -0.25, -0.2) * CFrame.Angles(0, 0, math.rad(90)),
+				Color3.fromRGB(235, 232, 225),
+				Enum.Material.SmoothPlastic,
+				Enum.PartType.Cylinder
+			)
+			mug.Name = "Mug"
+		end
+	end
+end
+
 function FoundationGuard.new(opts)
 	if not template then
 		buildTemplate()
@@ -156,11 +285,15 @@ function FoundationGuard.new(opts)
 	self.root = model:FindFirstChild("HumanoidRootPart")
 
 	-- Teint différent pour chaque garde
-	local skin = SKINS[opts.skin or math.random(1, #SKINS)]
+	local skin = opts.skinColor or SKINS[opts.skin or math.random(1, #SKINS)]
 	model.Head.Color = skin
 	local bodyColors = model:FindFirstChildOfClass("BodyColors")
 	if bodyColors then
 		bodyColors.HeadColor3 = skin
+	end
+	applyPersona(model, opts, skin)
+	if opts.scale then
+		model:ScaleTo(opts.scale)
 	end
 
 	model:PivotTo(opts.cframe or CFrame.new())

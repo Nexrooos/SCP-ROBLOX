@@ -2,7 +2,8 @@
 	CrazyDClassDialog (LocalScript) — à placer dans StarterPlayer > StarterPlayerScripts.
 	Nécessite ReplicatedStorage.SCPTerminal (notifications).
 
-	1. Dialogue avec D-0451 « Le Fou » (voir ServerScriptService.CrazyDClass) :
+	1. Dialogue avec les PNJ du hall : D-0451 « Le Fou » (CrazyDClass) et les gardes (HubLife),
+	   via le RemoteEvent ReplicatedStorage.FouDialog (« Open », nom, répliques, partie du PNJ) :
 	   une seule fenêtre en bas de l'écran, une réplique à la fois, écrite lettre par lettre.
 	   [E], clic ou bouton A : réplique suivante (ou fin de l'écriture). La fenêtre se ferme
 	   à la dernière réplique, ou si le joueur s'éloigne. Pendant le dialogue, l'attribut local
@@ -242,11 +243,12 @@ end
 
 clickArea.Activated:Connect(advance)
 
-remote.OnClientEvent:Connect(function(msg, speaker, newLines)
+-- anchor : partie du PNJ qui parle (D-0451 ou un garde, voir HubLife) ; sert à la distance et au prompt
+remote.OnClientEvent:Connect(function(msg, speaker, newLines, anchor)
 	if msg ~= "Open" or type(newLines) ~= "table" or #newLines == 0 then
 		return
 	end
-	npcRoot = findNpcRoot()
+	npcRoot = (typeof(anchor) == "Instance" and anchor:IsA("BasePart")) and anchor or findNpcRoot()
 	lines, index = newLines, 1
 	nameTag.Text = speaker or "D-0451"
 	open = true
