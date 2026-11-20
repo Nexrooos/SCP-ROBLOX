@@ -1,0 +1,68 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1795078173.1073847,
+    "seen": 1795078174.9069085,
+    "ast_hash": "b1bf1c5d2ea58a29060a6562705f2363",
+    "semantic_hash": ""
+  },
+  "src/ServerScriptService/SCP173AI.server.lua": {
+    "mtime": 1795058611.9233625,
+    "seen": 1795078174.9069161,
+    "ast_hash": "b8ad833cc9a14edeceebc99fec5ef129",
+    "semantic_hash": ""
+  },
+  "src/ServerStorage/SCP173Model.lua": {
+    "mtime": 1795058623.8192706,
+    "seen": 1795078174.9069195,
+    "ast_hash": "13d4e9261b00e068bb70112b7578ab90",
+    "semantic_hash": ""
+  },
+  "src/StarterPlayerScripts/BlinkAndWatch.client.lua": {
+    "mtime": 1795057788.196472,
+    "seen": 1795078174.906921,
+    "ast_hash": "a0cee1647111e2b20ae1c716411dffd6",
+    "semantic_hash": ""
+  },
+  "tools/scp173-mesh/render2.js": {
+    "mtime": 1795058623.8257563,
+    "seen": 1795078174.9069226,
+    "ast_hash": "25b4c989d14951625ba0b2b1a4909231",
+    "semantic_hash": ""
+  },
+  "tools/scp173-mesh/scene2.js": {
+    "mtime": 1795058623.825717,
+    "seen": 1795078174.906924,
+    "ast_hash": "b7b7e2f0b40357cfa360492154a22955",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1795078163.7742994,
+    "seen": 1795078174.9069252,
+    "ast_hash": "dfe5fa7939121e96d61b54077cc9ab84",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1795058623.8365016,
+    "seen": 1795078174.9069269,
+    "ast_hash": "c7253f8fcc2087eb8630ca19534dd210",
+    "semantic_hash": ""
+  },
+  "docs/CONCEPT.md": {
+    "mtime": 1795057716.5484693,
+    "seen": 1795078174.906928,
+    "ast_hash": "ad4605904fc812e4cad31811007e1428",
+    "semantic_hash": ""
+  },
+  "docs/scp173-apercu.png": {
+    "mtime": 1795058133.8764842,
+    "seen": 1795078174.9069295,
+    "ast_hash": "a3e0695ce80f0ed400b9497e01fdf6c5",
+    "semantic_hash": ""
+  },
+  "docs/scp173-v2-apercu.png": {
+    "mtime": 1795058590.6805005,
+    "seen": 1795078174.9069307,
+    "ast_hash": "e9ea8dbdbef587565e067e16d0822a76",
+    "semantic_hash": ""
+  }
+}
