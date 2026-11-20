@@ -5,7 +5,9 @@
 	tenue sombre, casque à visière, gilet « SÉCURITÉ » dans le dos, fusil porté en travers de la poitrine.
 	L'équipement est fait de parts simples soudées au corps (aucun asset externe).
 
-	Animations : celles de course et d'attente par défaut de Roblox. Les ID sont lus dans le script
+	Option walkSpeed : vitesse de marche (rondes du hall). Sous 10 studs/s, l'animation de marche est jouée.
+
+	Animations : celles de marche, de course et d'attente par défaut de Roblox. Les ID sont lus dans le script
 	« Animate » que Roblox génère avec l'avatar. Comme ce script est un LocalScript (inactif pour un PNJ),
 	on joue les pistes depuis le serveur sur l'Animator, et elles se répliquent aux clients.
 
@@ -53,7 +55,7 @@ local function buildTemplate()
 		local a = f and f:FindFirstChildWhichIsA("Animation")
 		return a and a.AnimationId or nil
 	end
-	animIds = { run = idOf("run"), idle = idOf("idle") }
+	animIds = { run = idOf("run"), walk = idOf("walk"), idle = idOf("idle") }
 	if animate then
 		animate:Destroy()
 	end
@@ -179,21 +181,33 @@ function FoundationGuard.new(opts)
 		return track
 	end
 	local runTrack = load(animIds.run, Enum.AnimationPriority.Movement)
+	local walkTrack = load(animIds.walk, Enum.AnimationPriority.Movement)
 	local idleTrack = load(animIds.idle, Enum.AnimationPriority.Idle)
 	if idleTrack then
 		idleTrack:Play()
 	end
+	if opts.walkSpeed then
+		self.humanoid.WalkSpeed = opts.walkSpeed
+	end
+	-- Marche sous 10 studs/s (rondes), course au-delà (cinématique)
 	self._running = self.humanoid.Running:Connect(function(speed)
-		if not runTrack then
+		local moving = speed > 1
+		local walking = moving and speed < 10 and walkTrack ~= nil
+		local track = walking and walkTrack or runTrack
+		local other = walking and runTrack or walkTrack
+		if other and other.IsPlaying then
+			other:Stop(0.2)
+		end
+		if not track then
 			return
 		end
-		if speed > 1 then
-			if not runTrack.IsPlaying then
-				runTrack:Play(0.15)
+		if moving then
+			if not track.IsPlaying then
+				track:Play(0.2)
 			end
-			runTrack:AdjustSpeed(speed / 16)
-		elseif runTrack.IsPlaying then
-			runTrack:Stop(0.2)
+			track:AdjustSpeed(walking and speed / 8 or speed / 16)
+		elseif track.IsPlaying then
+			track:Stop(0.25)
 		end
 	end)
 	return self

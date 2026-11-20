@@ -62,32 +62,59 @@ Le hall et les parties partagent la même place. Régler *Paramètres du jeu > P
 
 Sons à renseigner dans `CONFIG` : `DOOR_SOUND_ID`, `DEPART_SOUND_ID`.
 
-### 1.6 Décor du hall
+### 1.6 Règle du hall : aucune anomalie
+
+Le hall de transit ne cite **aucun SCP** : ni numéro, ni nom, ni surnom, ni réplique, ni panneau. Les anomalies n'existent qu'une fois la partie lancée. Seuls le nom de l'organisation et le logo de la Fondation sont présents. D-0451 n'en parle que par allusions.
+
+### 1.7 Éclairage à l'apparition
+
+- `Workspace.Hub` est en `ModelStreamingMode = Persistent` : le hall arrive en entier dès la connexion, malgré le StreamingEnabled.
+- `SpawnCurtain` (ReplicatedFirst) garde un écran noir jusqu'à ce que le décor et le personnage soient là, puis fait un fondu.
+- Les lampes du hall sont des lumières locales, que Roblox ne rend pas en qualité graphique basse (la qualité « Automatique » démarre basse). En mode Hall, `HubServer` relève donc l'ambiance de base (`HUB_LIGHTING`) pour que le hall soit lisible dès la première image et sur les appareils modestes. Elle est rétablie au passage en partie.
+
+### 1.8 Décor du hall
 
 Dossier `Workspace.Hub.Decor`, construit dans la place Studio (pas de script de génération) :
 
 | Élément | Emplacement | Contenu |
 |---|---|---|
-| `CelluleIsolement` | mur ouest | cellule capitonnée à barreaux de D-0451, gribouillis au marqueur, néon qui grésille, repère `FouSpot` du PNJ |
-| `Vitrine173` | mur est | réplique de SCP-173 sous verre, plaque « EUCLIDE », cordon de sécurité, traces de raclement au sol |
-| `Affiches` | murs est, ouest et sud | classes Sûr / Euclide / Keter, « Sécuriser · Contenir · Protéger », avertissement SCP-096, compteur « jours sans incident : 00 » |
-| `Cameras` | coins du plafond | caméras de surveillance, voyant rouge clignotant (attribut `Blink`) |
-| `Menage` | côté nord-ouest | panneau « sol glissant », flaque, chariot de ménage |
+| `CelluleIsolement` | mur ouest | cellule de détention : barreaux épais, porte verrouillée avec boîtier à clavier, sol sale, lit de camp, toilette inox, néon grillagé qui grésille, caméra dans un coin ; repères `FouSpot` (fond) et `FouGrab` (barreaux) |
+| `PosteControle` | mur est | bureau, 3 écrans de surveillance, 2 consoles, fauteuil |
+| `Assises` | centre | 2 îlots jardinière + bancs, 2 bancs près du spawn |
+| `Plantes` | autour des piliers | plantes en pot |
+| `Logistique` | côtés | chariot avec caisses, palette, servante d'outils |
+| `Signaletique` | plafond | panneaux suspendus « ZONE DE TRANSIT ↑ », « SÉCURITÉ → » |
+| `Ventilation` | plafond | bouches de ventilation (attribut `VentHum`) |
+| `Cameras` | coins du plafond | caméras de surveillance (tag `SecurityCam`), voyant rouge (attribut `Blink`) |
+| `Affiches`, `Menage` | murs, sol | badge obligatoire, « Sécuriser · Contenir · Protéger », jours sans incident ; sol glissant, chariot de ménage |
 
-### 1.7 D-0451 « Le Fou » et dossier des anomalies
+`Workspace.Hub.Patrols` contient les repères des gardes, déplaçables dans Studio et invisibles en jeu : `GuardPost_Cell` (garde posté, face avant = regard), `PatrolA` et `PatrolB` (points `P01`, `P02`… parcourus en boucle).
 
-Un Classe D enfermé dans la cellule d'isolement. On lui parle à travers les barreaux (touche E). Il ne parle que des anomalies que le joueur a déjà rencontrées, et donne un conseil par conversation.
+### 1.9 Vie du hall
 
-- **Dossier.** `SCPCodex` enregistre, pour chaque joueur, les anomalies vues et le nombre de morts contre chacune (DataStore `SCPCodex_v1`, car le hall et les parties sont sur des serveurs différents). SCP-173 entre au dossier dès que le joueur le regarde, et chaque mort est comptée. À la première rencontre, une notification « DOSSIER » renvoie vers D-0451.
-- **Répliques.** `SCPTips` contient les répliques : salut, salut selon le nombre de morts, conseils dans l'ordre puis en boucle, et réponses quand le joueur n'a encore rien vu. Les conseils de SCP-096, 106, 049 et 939 sont déjà écrits pour la suite.
-- **Ajouter une anomalie.** Une entrée dans `SCPTips.ENTRIES`, plus un appel à `SCPCodex.markSeen(player, "SCP-XXX", { died = true })` dans son script.
+- **Gardes** (`HubLife`) : un garde posté devant la cellule, qui jette des coups d'œil au détenu, et deux gardes en ronde lente. Le module `FoundationGuard` joue l'animation de marche par défaut de Roblox, lue dans le script Animate généré.
+- **Écrans de surveillance** (`SecurityMonitors`) : chaque écran tagué `SecurityScreen` affiche une vraie image, dans un `ViewportFrame` filmé depuis une caméra `SecurityCam`. On y voit le décor, les joueurs, les gardes et D-0451 en direct (15 images/s). Les caméras du plafond balaient lentement, et l'écran change de caméra toutes les 9 s avec un parasite. Incrustation : nom de la caméra, REC, date et heure. Les écrans ne sont construits qu'à moins de 70 studs du joueur.
+- **Sons** (`HubLife`, dans `CONFIG`) : bourdonnement de ventilation (ProSoundEffects 9125446564) et annonces occasionnelles aux haut-parleurs (carillon 88920716117135, puis voix radio ProSoundEffects filtrée).
+
+### 1.10 D-0451 « Le Fou » et dossier des anomalies
+
+Un Classe D enfermé dans la cellule de détention. Combinaison orange sale et déchirée, cheveux en bataille, posture voûtée.
+
+- **Animation** (`CrazyDClassAnim`, client) : ses articulations sont converties en `Motor6D` et animées à la main, sans ID d'animation. Il se balance d'avant en arrière et a des tics nerveux. Il tourne brusquement la tête vers le joueur le plus proche (attribut `Focus`), puis le suit du regard.
+- **Conversation** (touche E, depuis la ligne jaune) : il se jette sur les barreaux et s'y agrippe en les secouant (attribut `State` : Rush, Grab, puis Return), et parle dans une seule fenêtre en bas de l'écran.
+- **Répliques** (`SCPTips`) : décousues, inquiétantes, sans aucun nom d'anomalie. Si le joueur n'a rien vécu, il délire. Sinon, il glisse des conseils déguisés sur ce que le joueur a rencontré, d'après le dossier `SCPCodex` (DataStore `SCPCodex_v1`). Exemple pour SCP-173 : « Faut la regarder. Toujours. »
+- **Ajouter une anomalie** : une entrée dans `SCPTips.ENTRIES` (identifiant interne, jamais affiché), plus un appel à `SCPCodex.markSeen(player, "SCP-XXX", { died = true })` dans son script.
 
 | Fichier | Type dans Roblox Studio | Emplacement |
 |---|---|---|
+| `src/ReplicatedFirst/SpawnCurtain.client.lua` | **LocalScript** | `ReplicatedFirst` |
+| `src/ServerScriptService/HubLife.server.lua` | **Script** | `ServerScriptService` |
 | `src/ServerScriptService/SCPCodex.lua` | **ModuleScript** | `ServerScriptService` |
 | `src/ServerScriptService/CrazyDClass.server.lua` | **Script** | `ServerScriptService` |
 | `src/ReplicatedStorage/SCPTips.lua` | **ModuleScript** | `ReplicatedStorage` |
+| `src/StarterPlayerScripts/CrazyDClassAnim.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
 | `src/StarterPlayerScripts/CrazyDClassDialog.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
+| `src/StarterPlayerScripts/SecurityMonitors.client.lua` | **LocalScript** | `StarterPlayer > StarterPlayerScripts` |
 
 Dans Studio, le dossier n'est sauvegardé que si *Paramètres du jeu > Sécurité > Autoriser l'accès de Studio aux services API* est activé. Sinon, il reste en mémoire le temps de l'essai.
 

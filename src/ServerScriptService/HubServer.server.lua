@@ -62,7 +62,35 @@ local function readPartySize(player)
 	end
 end
 
+-- Éclairage du hall. Les lampes du hall sont des lumières locales, que Roblox ne rend pas en qualité
+-- graphique basse (et toute qualité « Automatique » démarre basse) : avec l'ambiance sombre du jeu,
+-- le hall serait noir à l'apparition et sur les appareils modestes. En mode Hall, l'ambiance de base
+-- est donc relevée ; elle est rétablie au passage en partie (bloc D, ambiance sombre voulue).
+local Lighting = game:GetService("Lighting")
+local HUB_LIGHTING = {
+	Ambient = Color3.fromRGB(138, 142, 150),
+	OutdoorAmbient = Color3.fromRGB(120, 124, 132),
+	EnvironmentDiffuseScale = 0.4,
+	ExposureCompensation = 0,
+}
+local savedLighting = nil
+local function useHubLighting(on)
+	if on and not savedLighting then
+		savedLighting = {}
+		for k, v in pairs(HUB_LIGHTING) do
+			savedLighting[k] = Lighting[k]
+			Lighting[k] = v
+		end
+	elseif not on and savedLighting then
+		for k, v in pairs(savedLighting) do
+			Lighting[k] = v
+		end
+		savedLighting = nil
+	end
+end
+
 local function enterMatch(partySize)
+	useHubLighting(false)
 	if partySize then
 		workspace:SetAttribute("PartySize", partySize)
 	end
@@ -90,6 +118,7 @@ if block then
 	block.Parent = ServerStorage
 end
 workspace:SetAttribute("ServerMode", "Hub")
+useHubLighting(true)
 
 ---------------------------------------------------------------------------
 -- Communication avec les clients
